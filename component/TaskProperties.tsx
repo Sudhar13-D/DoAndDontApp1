@@ -46,7 +46,7 @@ export default function TaskProperties() {
 
  }
   return(
-              <KeyboardAvoidingView>
+              <KeyboardAvoidingView style = {{flex:1}}>
                   <Text  style ={styles.header}>Task Related to</Text>
                   <View style = {{alignItems:'center',flexDirection:'row',flexWrap:'wrap',}}>
                        <TouchableOpacity //when we click the eductaion button we will update (related) as education initially it was ('') so related is education === education it will apply orange

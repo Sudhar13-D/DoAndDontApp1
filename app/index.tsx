@@ -1,4 +1,5 @@
 import React,{useEffect, useState} from 'react';
+import { useWindowDimensions } from 'react-native';
 import { Text, View, StyleSheet, TouchableOpacity, Alert,TextInput,ImageBackground,Button } from "react-native";
 import { Link } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
@@ -13,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function Index() {
   const navigation = useNavigation<NavigationProp>();
   const [quote,setQuote]=useState('')
+  const { width, height} = useWindowDimensions();
   const handleQuote = () =>{
     const newQuote = quote
     setQuote(quote?.toString())
@@ -42,6 +44,7 @@ useEffect(()=>{
 },[])
   
   return (
+    <View style = {{ width:width*0.9,height: height*0.1}}>
     <ImageBackground 
     source = {require('@/assets/images/logo.png')}
     style = {styles.background}
@@ -76,6 +79,7 @@ useEffect(()=>{
       </View>
     </View>
     </ImageBackground>
+    </View>
   );
 }
 
