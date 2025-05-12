@@ -4,7 +4,7 @@ import React from 'react'
 const goal = () => {
   return (
     <View>
-      <Text>goal</Text>
+      <Text>woekpwekfwekfpwf</Text>
     </View>
   )
 }
