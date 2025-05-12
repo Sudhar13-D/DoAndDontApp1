@@ -1,14 +1,17 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React from 'react';
+import { Text, View, StyleSheet } from 'react-native';
+
 
 const goal = () => {
   return (
     <View>
-      <Text>woekpwekfwekfpwf</Text>
+      <Text>Hello</Text>
     </View>
   )
 }
 
 export default goal
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+
+})
