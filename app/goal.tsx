@@ -167,10 +167,13 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   fabIcon: {
-    fontSize: 30,
+    fontSize: 36,
     color: 'white',
     fontWeight: 'bold',
+    lineHeight: 60,
+    textAlign: 'center',
   },
+
   categoryButtonContainer: {
     position: 'absolute',
     alignItems: 'center',
