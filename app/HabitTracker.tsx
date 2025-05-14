@@ -81,7 +81,7 @@ export default function HabitTrackerScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.topBar}>
-        <Button title="View Log" onPress={() => router.push('/log')} />
+        <Button title="View Log" onPress={() => router.push('../log')} />
       </View>
 
       <Text style={styles.header}>Today's Habits</Text>
