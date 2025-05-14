@@ -63,41 +63,33 @@ const getData = async () => {
         <Text style={styles.header}>Today Task</Text>
       </View>
 
-     <FlatList
-       data={taskList}
-       renderItem={({ item }) => <Task task={item} />}
-       keyExtractor={(_, index) => index.toString()}
-      />
+      {showForm ? (
+        <View style={styles.taskPropertyContainer}>
+          <TaskProperties onConfirm={handleTaskPropertiesConfirm} />
+        </View>
+      ) : (
+        <>
+          <FlatList
+            data={taskList}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => <Task taskData = {item} />}
+            
+          />
 
+          {/* Input Row */}
+          <View style={styles.inputRow}>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => {
+                setShowForm(true);
+              }}
+            >
+              <Text style={styles.plus}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
 
-      {/* Input Row */}
-      <View style={styles.inputRow}>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Enter your Task"
-          value={task}
-          onChangeText={setTask}
-        />
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => {
-            if (task.trim().length > 0) {
-              setShowForm(true);
-            } else {
-              alert('Please enter a task');
-            }
-          }}
-        >
-          <Text style={styles.plus}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Show task + properties when form is triggered */}
-     {showForm && (
-  <View style={styles.taskPropertyContainer}>
-    <TaskProperties onConfirm={handleTaskPropertiesConfirm} />
-  </View>
-)}
 
     </KeyboardAvoidingView>
   );
@@ -136,7 +128,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 10,
+    marginTop:15,
+    marginLeft: 350,
   },
   plus: {
     fontSize: 24,
@@ -145,7 +138,6 @@ const styles = StyleSheet.create({
   taskPropertyContainer: {
     marginHorizontal: 20,
     marginBottom: 20,
-    padding: 15,
     backgroundColor: '#f2f2f2',
     borderRadius: 10,
   },
