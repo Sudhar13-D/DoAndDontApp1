@@ -11,7 +11,7 @@ export default function Task({ title }: { title: string }) {
 
 const styles = StyleSheet.create({
   taskContainer: {
-    backgroundColor: '#E8E8E8',
+    backgroundColor: 'green',
     padding: 15,
     marginVertical: 5,
     borderRadius: 10,
