@@ -15,13 +15,13 @@ import TaskProperties from '@/component/TaskProperties'; // Your form for proper
 
 export default function DoList() {
   const [task, setTask] = useState('');
-  const [taskList, setTaskList] = useState<string[]>([]);
+  const [taskList, setTaskList] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
 
   // Save to AsyncStorage
   const setStringValue = async (value: string) => {
     try {
-      await AsyncStorage.setItem('Task', value);
+      await AsyncStorage.setItem('task', value);
     } catch (e) {
       alert(e);
     }
@@ -29,31 +29,29 @@ export default function DoList() {
   };
 
   // Load from AsyncStorage
-  const getData = async () => {
-    try {
-      const value = await AsyncStorage.getItem('Task');
-      if (value !== null) {
-        setTaskList(JSON.parse(value));
-      }
-    } catch (e) {
-      console.log('Error loading data:', e);
+const getData = async () => {
+  try {
+    const value = await AsyncStorage.getItem('task');
+    if (value !== null) {
+      setTaskList(JSON.parse(value));
     }
-  };
+  } catch (e) {
+    console.log('Error loading data:', e);
+  }
+};
 
   useEffect(() => {
     getData();
   }, []);
 
   // Handle task confirmation (e.g., after properties are selected)
-  const handleConfirmTask = () => {
-    if (task.trim().length > 0) {
-      const updatedList = [...taskList, task];
-      setTaskList(updatedList);
-      setStringValue(JSON.stringify(updatedList));
-      setTask('');
-      setShowForm(false);
-    }
-  };
+  const handleTaskPropertiesConfirm = (taskData: any) => {
+  const updatedList = [...taskList, taskData];
+  setTaskList(updatedList);
+  setStringValue(JSON.stringify(updatedList));
+  setShowForm(false);
+};
+
 
   return (
     <KeyboardAvoidingView
@@ -65,11 +63,12 @@ export default function DoList() {
         <Text style={styles.header}>Today Task</Text>
       </View>
 
-      <FlatList
-        data={taskList}
-        renderItem={({ item }) => <Task title={item} />}
-        keyExtractor={(item, index) => index.toString()}
+     <FlatList
+       data={taskList}
+       renderItem={({ item }) => <Task task={item} />}
+       keyExtractor={(_, index) => index.toString()}
       />
+
 
       {/* Input Row */}
       <View style={styles.inputRow}>
@@ -94,18 +93,12 @@ export default function DoList() {
       </View>
 
       {/* Show task + properties when form is triggered */}
-      {showForm && (
-        <View style={styles.taskPropertyContainer}>
-          <Task title={task} />
-          <TaskProperties />
-          <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={handleConfirmTask}
-          >
-            <Text style={styles.confirmText}>Confirm Task</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+     {showForm && (
+  <View style={styles.taskPropertyContainer}>
+    <TaskProperties onConfirm={handleTaskPropertiesConfirm} />
+  </View>
+)}
+
     </KeyboardAvoidingView>
   );
 }

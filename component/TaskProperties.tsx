@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function TaskProperties() {
+export default function TaskProperties({ onConfirm }: { onConfirm: (taskData: any) => void }) {
   const [taskName, setTaskName] = useState('');
   const [related, setRelated] = useState('');
   const [level, setLevel] = useState('');
@@ -23,39 +23,43 @@ export default function TaskProperties() {
     { label: 'AM', value: 'AM' },
     { label: 'PM', value: 'PM' },
   ]);
+const handleAddTask = async () => {
+  if (!taskName.trim()) {
+    alert('Please enter the task name.');
+    return;
+  }
 
-  const handleAddTask = async () => {
-    if (!taskName.trim()) {
-      alert('Please enter the task name.');
-      return;
-    }
-
-    const taskData = {
-      taskName: taskName.trim(),
-      taskRelated: related,
-      taskLevel: level,
-      taskAllocatedTime: `${allocatedTime} ${unitValue}`,
-      taskScheduledTime: `${scheduledTime} ${unitValue1}`,
-    };
-
-    try {
-      const existingTasks = await AsyncStorage.getItem('task');
-      const tasks = existingTasks ? JSON.parse(existingTasks) : [];
-      tasks.push(taskData);
-      await AsyncStorage.setItem('task', JSON.stringify(tasks));
-      alert('Task saved');
-      // Clear fields
-      setTaskName('');
-      setRelated('');
-      setLevel('');
-      setAllocatedTime('');
-      setScheduledTime('');
-      setUnitValue('');
-      setUnitValue1('');
-    } catch (e) {
-      console.error('Saving error:', e);
-    }
+  const taskData: any = {
+    taskName: taskName.trim(),
+    taskRelated: related,
+    taskLevel: level,
+    taskAllocatedTime: `${allocatedTime} ${unitValue}`,
+    taskScheduledTime: `${scheduledTime} ${unitValue1}`,
   };
+
+  onConfirm(taskData);
+
+  try {
+    const existingTasks = await AsyncStorage.getItem('task');
+    const tasks = existingTasks ? JSON.parse(existingTasks) : [];
+    tasks.push(taskData);
+    await AsyncStorage.setItem('task', JSON.stringify(tasks));
+    alert('Task saved');
+
+    // Clear fields
+    setTaskName('');
+    setRelated('');
+    setLevel('');
+    setAllocatedTime('');
+    setScheduledTime('');
+    setUnitValue('');
+    setUnitValue1('');
+  } catch (e) {
+    console.error('Saving error:', e);
+  }
+};
+
+  
 
   return (
     <KeyboardAvoidingView>
@@ -142,9 +146,9 @@ export default function TaskProperties() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleAddTask}>
-          <Text style={styles.buttonText}>Add Task</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleAddTask}>
+           <Text style={styles.buttonText}>Add Task</Text>
+          </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -1,13 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function Task({ title }: { title: string }) {
+export default function Task({ task }: { task: any }) {
   return (
-    <View style={styles.taskContainer}>
-      <Text style={styles.taskText}>{title}</Text>
+    <View style={{ padding: 10, backgroundColor: 'white', margin: 5, borderRadius: 10 }}>
+      <Text style={{ fontWeight: 'bold' }}>{task.taskName}</Text>
+      <Text>Category: {task.taskRelated}</Text>
+      <Text>Level: {task.taskLevel}</Text>
+      <Text>Allocated: {task.taskAllocatedTime}</Text>
+      <Text>Scheduled: {task.taskScheduledTime}</Text>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   taskContainer: {
