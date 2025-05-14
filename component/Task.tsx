@@ -1,41 +1,22 @@
-import { View, Text, StyleSheet,TouchableOpacity} from 'react-native';
 import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 
-type props = {
-  title: string;
-}
-
-export default function Task({ title }: props) {
+export default function Task({ title }: { title: string }) {
   return (
-    <View style={styles.viewStyle}>
-      
-      <View style={styles.taskContainer}>
-      <TouchableOpacity >
-        <Text style={styles.textStyle}>{title}</Text>
-        </TouchableOpacity>
-      </View>
-      
+    <View style={styles.taskContainer}>
+      <Text style={styles.taskText}>{title}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  viewStyle: {
-    flex: 1,
-    alignItems: 'center',
-  },
   taskContainer: {
-    width: 400,
-    height: 75,
-    borderRadius: 20,
-    backgroundColor: 'green',
-    justifyContent: 'center',   // vertical centering
-     
-    marginBottom:5      // horizontal centering
+    backgroundColor: '#E8E8E8',
+    padding: 15,
+    marginVertical: 5,
+    borderRadius: 10,
   },
-  textStyle: {
-    paddingHorizontal:30,
-    fontSize: 20,
-    color: 'white',
+  taskText: {
+    fontSize: 16,
   },
 });
