@@ -3,55 +3,81 @@ import {
   Text,
   View,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   FlatList,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Task from '@/component/Task'; // Your task UI component
-import TaskProperties from '@/component/TaskProperties'; // Your form for properties
+import Task from '@/component/Task';
+import TaskProperties from '@/component/TaskProperties';
 
 export default function DoList() {
-  const [task, setTask] = useState('');
   const [taskList, setTaskList] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
-
-  // Save to AsyncStorage
-  const setStringValue = async (value: string) => {
-    try {
-      await AsyncStorage.setItem('task', value);
-    } catch (e) {
-      alert(e);
-    }
-    console.log('Saved to AsyncStorage');
-  };
-
-  // Load from AsyncStorage
-const getData = async () => {
-  try {
-    const value = await AsyncStorage.getItem('task');
-    if (value !== null) {
-      setTaskList(JSON.parse(value));
-    }
-  } catch (e) {
-    console.log('Error loading data:', e);
-  }
-};
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     getData();
   }, []);
 
-  // Handle task confirmation (e.g., after properties are selected)
-  const handleTaskPropertiesConfirm = (taskData: any) => {
-  const updatedList = [...taskList, taskData];
-  setTaskList(updatedList);
-  setStringValue(JSON.stringify(updatedList));
-  setShowForm(false);
-};
+  const getData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('task');
+      if (value !== null) {
+        setTaskList(JSON.parse(value));
+      }
+    } catch (e) {
+      console.log('Error loading data:', e);
+    }
+  };
 
+  const saveTasks = async (tasks: any[]) => {
+    try {
+      await AsyncStorage.setItem('task', JSON.stringify(tasks));
+    } catch (e) {
+      console.log('Error saving data:', e);
+    }
+  };
+
+  const sortTasks = (tasks: any[]) => {
+    const completed = tasks.filter(t => t.completed);
+    const notCompleted = tasks.filter(t => !t.completed);
+    return [...notCompleted, ...completed];
+  };
+
+  const toggleComplete = (index: number) => {
+    const updatedTasks = [...taskList];
+    updatedTasks[index].completed = !updatedTasks[index].completed;
+    const sorted = sortTasks(updatedTasks);
+    setTaskList(sorted);
+    saveTasks(sorted);
+  };
+
+  const handleDelete = (index: number) => {
+    const updatedTasks = taskList.filter((_, i) => i !== index);
+    setTaskList(updatedTasks);
+    saveTasks(updatedTasks);
+  };
+
+  const editTask = (index: number) => {
+    setEditingIndex(index);
+    setShowForm(true);
+  };
+
+  const handleTaskPropertiesConfirm = (taskData: any) => {
+    const updatedList = [...taskList];
+    if (editingIndex !== null) {
+      updatedList[editingIndex] = { ...taskData, completed: taskList[editingIndex].completed };
+    } else {
+      updatedList.push({ ...taskData, completed: false });
+    }
+    const sorted = sortTasks(updatedList);
+    setTaskList(sorted);
+    saveTasks(sorted);
+    setEditingIndex(null);
+    setShowForm(false);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -59,29 +85,38 @@ const getData = async () => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={100}
     >
-      <View>
-        <Text style={styles.header}>Today Task</Text>
-      </View>
+      <Text style={styles.header}>Today Task</Text>
 
       {showForm ? (
         <View style={styles.taskPropertyContainer}>
-          <TaskProperties onConfirm={handleTaskPropertiesConfirm} />
+          <TaskProperties
+            onConfirm={handleTaskPropertiesConfirm}
+            editingTask={editingIndex !== null ? taskList[editingIndex] : null}
+            editingIndex={editingIndex}
+          />
         </View>
       ) : (
         <>
           <FlatList
+            nestedScrollEnabled
             data={taskList}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => <Task taskData = {item} />}
-            
+            renderItem={({ item, index }) => (
+              <Task
+                task={item}
+                onToggleComplete={() => toggleComplete(index)}
+                onEdit={() => editTask(index)}
+                onDelete={() => handleDelete(index)}
+              />
+            )}
+            keyExtractor={(_, index) => index.toString()}
           />
 
-          {/* Input Row */}
           <View style={styles.inputRow}>
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => {
                 setShowForm(true);
+                setEditingIndex(null);
               }}
             >
               <Text style={styles.plus}>+</Text>
@@ -89,8 +124,6 @@ const getData = async () => {
           </View>
         </>
       )}
-
-
     </KeyboardAvoidingView>
   );
 }
@@ -112,15 +145,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingHorizontal: 20,
   },
-  textInput: {
-    flex: 1,
-    height: 50,
-    borderRadius: 20,
-    backgroundColor: '#F8F8FF',
-    paddingHorizontal: 10,
-    fontSize: 16,
-    textAlign: 'center',
-  },
   addButton: {
     width: 50,
     height: 50,
@@ -128,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop:15,
+    marginTop: 15,
     marginLeft: 350,
   },
   plus: {
@@ -140,16 +164,5 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: '#f2f2f2',
     borderRadius: 10,
-  },
-  confirmButton: {
-    marginTop: 15,
-    backgroundColor: '#4CAF50',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  confirmText: {
-    color: 'white',
-    fontWeight: 'bold',
   },
 });

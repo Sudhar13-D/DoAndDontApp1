@@ -1,56 +1,73 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
-export default function Task({ taskData }: { taskData: any }) {
-  const [expanded, setExpanded] = useState(false);
-
+export default function Task({ task, onToggleComplete, onEdit, onDelete }: any) {
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => setExpanded(!expanded)} style={styles.titleContainer}>
-        <Text style={styles.taskName}>{taskData.taskName}</Text>
-      </TouchableOpacity>
-
-      {expanded && (
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detail}>Related To: {taskData.taskRelated}</Text>
-          <Text style={styles.detail}>Level: {taskData.taskLevel}</Text>
-          <Text style={styles.detail}>Allocated Time: {taskData.taskAllocatedTime}</Text>
-          <Text style={styles.detail}>Scheduled Time: {taskData.taskScheduledTime}</Text>
-        </View>
-      )}
-    </View>
+    <TouchableOpacity
+      style={[
+        styles.taskContainer,
+        task.completed && styles.completedTask,
+      ]}
+      onPress={onToggleComplete}
+    >
+      <View style={styles.taskHeader}>
+        <Text style={styles.taskText}>
+          {task.taskName} ({task.taskRelated}) [{task.taskLevel}]
+        </Text>
+       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+  <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
+    <Text style={styles.actionText}>Edit</Text>
+  </TouchableOpacity>
+  <TouchableOpacity onPress={onDelete} style={styles.actionButton}>
+    <Text style={styles.actionText}>Delete</Text>
+  </TouchableOpacity>
+</View>
+      </View>
+      <Text style={styles.subText}>
+        Allocated: {task.taskAllocatedTime}, Scheduled: {task.taskScheduledTime}
+      </Text>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: 15,
-    marginVertical: 8,
-    borderWidth: 1,
-    borderRadius: 12,
-    borderColor: '#ccc',
-    backgroundColor: 'white',
-    elevation: 2,
-  },
-  titleContainer: {
+  taskContainer: {
     padding: 15,
-    backgroundColor: 'grey',
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    borderRadius:5
+    backgroundColor: '#e0f7fa',
+    marginBottom: 10,
+    borderRadius: 8,
   },
-  taskName: {
-    fontSize: 18,
-    fontWeight: '600',
+  completedTask: {
+    backgroundColor: '#c8e6c9',
+    opacity: 0.6,
   },
-  detailsContainer: {
-    padding: 15,
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-  
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  detail: {
+  iconRow: {
+    flexDirection: 'row',
+  },
+  taskText: {
     fontSize: 16,
-    marginBottom: 5,
+    fontWeight: 'bold',
+    flexShrink: 1,
   },
+  subText: {
+    fontSize: 14,
+    marginTop: 4,
+    color: '#555',
+  },
+  actionButton: {
+  backgroundColor: '#ddd',
+  padding: 6,
+  borderRadius: 5,
+  marginHorizontal: 5,
+},
+actionText: {
+  color: '#000',
+  fontWeight: 'bold',
+},
 });
