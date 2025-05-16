@@ -21,6 +21,7 @@ export default function JournalScreen() {
   const [text, setText] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [entries, setEntries] = useState<any[]>([]);
+  const [showJournal, setShowJournal] = useState(false); // NEW STATE
 
   const today = new Date().toISOString().split('T')[0];
   const filePath = `${JOURNAL_FOLDER}${today}.json`;
@@ -32,33 +33,33 @@ export default function JournalScreen() {
       if (!folderInfo.exists) {
         await FileSystem.makeDirectoryAsync(JOURNAL_FOLDER, { intermediates: true });
       }
+
       const checkAndExportPreviousDay = async () => {
-  const lastDate = await AsyncStorage.getItem('lastSavedDate');
-  const today = new Date().toISOString().split('T')[0];
+        const lastDate = await AsyncStorage.getItem('lastSavedDate');
+        const today = new Date().toISOString().split('T')[0];
 
-  if (lastDate && lastDate !== today) {
-    const previousFilePath = `${JOURNAL_FOLDER}${lastDate}.json`;
-    const destinationPath = FileSystem.documentDirectory + `../Download/${lastDate}.json`;
+        if (lastDate && lastDate !== today) {
+          const previousFilePath = `${JOURNAL_FOLDER}${lastDate}.json`;
+          const destinationPath = FileSystem.documentDirectory + `../Download/${lastDate}.json`;
 
-    try {
-      const fileInfo = await FileSystem.getInfoAsync(previousFilePath);
-      if (fileInfo.exists) {
-        await FileSystem.copyAsync({
-          from: previousFilePath,
-          to: destinationPath,
-        });
-        console.log(`Exported ${lastDate}.json to Downloads`);
-      }
-    } catch (err) {
-      console.log('Export error:', err);
-    }
-  }
+          try {
+            const fileInfo = await FileSystem.getInfoAsync(previousFilePath);
+            if (fileInfo.exists) {
+              await FileSystem.copyAsync({
+                from: previousFilePath,
+                to: destinationPath,
+              });
+              console.log(`Exported ${lastDate}.json to Downloads`);
+            }
+          } catch (err) {
+            console.log('Export error:', err);
+          }
+        }
 
-  // Save today's date as last saved
-  await AsyncStorage.setItem('lastSavedDate', today);
-};
+        await AsyncStorage.setItem('lastSavedDate', today);
+      };
 
-checkAndExportPreviousDay();
+      checkAndExportPreviousDay();
       loadTodayEntries();
     })();
   }, []);
@@ -113,21 +114,6 @@ checkAndExportPreviousDay();
     }
   };
 
- /* const downloadImage = async (uri: string) => {
-    try {
-      const fileName = uri.split('/').pop();
-      const newPath = FileSystem.cacheDirectory + fileName;
-      await FileSystem.copyAsync({ from: uri, to: newPath });
-
-      const asset = await MediaLibrary.createAssetAsync(newPath);
-      await MediaLibrary.createAlbumAsync('Journal Images', asset, false);
-      Alert.alert('Saved', 'Image saved to gallery.');
-    } catch (err) {
-      console.log('Download error:', err);
-      Alert.alert('Error', 'Could not download image.');
-    }
-  };*/
-
   const deleteEntry = async (indexToDelete: number) => {
     const updatedEntries = entries.filter((_, index) => index !== indexToDelete);
     try {
@@ -160,31 +146,45 @@ checkAndExportPreviousDay();
       <Button title="Pick Image" onPress={pickImage} />
       <View style={{ height: 10 }} />
       <Button title="Add to Journal" onPress={addJournalItem} />
+      <View style={{ height: 20 }} />
 
-      <Text style={styles.subHeading}>Today's Entries:</Text>
+      {/* Button to toggle journal entries */}
+      <Button
+        title={showJournal ? 'Hide Journal' : "Today's Journal"}
+        onPress={() => setShowJournal(!showJournal)}
+        color="#6c5ce7"
+      />
 
-      {entries.map((item, index) => (
-        <View key={index} style={styles.entry}>
-          <Text style={styles.time}>{item.time}</Text>
-          {item.text ? <Text style={styles.entryText}>{item.text}</Text> : null}
-          {item.image ? (
-            <>
-              <Image source={{ uri: item.image }} style={styles.entryImage} resizeMode="cover" />
-              <View style={styles.buttonRow}>
-
-                <View style ={{alignItems:'center',}} >
-                <TouchableOpacity
-                  style={[styles.entryButton, { backgroundColor: '#e74c3c' }]}
-                  onPress={() => deleteEntry(index)}
-                >
-                  <Text style={styles.buttonText}>Delete</Text>
-                </TouchableOpacity>
+      {/* Show journal container only if visible */}
+      {showJournal && (
+        <View style={styles.journalContainer}>
+          <ScrollView>
+            {entries.length === 0 ? (
+              <Text style={{ textAlign: 'center', marginTop: 20 }}>No entries yet.</Text>
+            ) : (
+              entries.map((item, index) => (
+                <View key={index} style={styles.entry}>
+                  <Text style={styles.time}>{item.time}</Text>
+                  {item.text ? <Text style={styles.entryText}>{item.text}</Text> : null}
+                  {item.image ? (
+                    <>
+                      <Image source={{ uri: item.image }} style={styles.entryImage} resizeMode="cover" />
+                      <View style={{ alignItems: 'center' }}>
+                        <TouchableOpacity
+                          style={[styles.entryButton, { backgroundColor: '#e74c3c' }]}
+                          onPress={() => deleteEntry(index)}
+                        >
+                          <Text style={styles.buttonText}>Delete</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  ) : null}
                 </View>
-              </View>
-            </>
-          ) : null}
+              ))
+            )}
+          </ScrollView>
         </View>
-      ))}
+      )}
     </ScrollView>
   );
 }
@@ -197,12 +197,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 12,
-  },
-  subHeading: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 20,
-    marginBottom: 10,
   },
   textInput: {
     borderWidth: 1,
@@ -219,11 +213,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 10,
   },
+  journalContainer: {
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    borderRadius: 10,
+    padding: 10,
+    height: 400, // Square-like scrollable container
+    backgroundColor: '#f0f0f0',
+  },
   entry: {
     marginBottom: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ffffff',
     padding: 10,
     borderRadius: 10,
+    elevation: 2,
   },
   time: {
     fontSize: 12,
@@ -240,18 +244,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
   entryButton: {
-    flex: 1,
     backgroundColor: '#3498db',
     paddingVertical: 10,
-    paddingHorizontal:10,
-    borderRadius:10,
-    marginHorizontal: 160,
-    
+    paddingHorizontal: 20,
+    borderRadius: 10,
   },
   buttonText: {
     color: 'white',
