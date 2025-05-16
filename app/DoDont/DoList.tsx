@@ -3,20 +3,19 @@ import {
   Text,
   View,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   FlatList,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Task from '@/component/Task'; // Your task UI component
-import TaskProperties from '@/component/TaskProperties'; // Your form for properties
+import Task from '@/component/Task';
+import TaskProperties from '@/component/TaskProperties';
 
 export default function DoList() {
-  const [task, setTask] = useState('');
   const [taskList, setTaskList] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
 
   // Save to AsyncStorage
   const setStringValue = async (value: string) => {
@@ -25,33 +24,62 @@ export default function DoList() {
     } catch (e) {
       alert(e);
     }
-    console.log('Saved to AsyncStorage');
   };
 
   // Load from AsyncStorage
-const getData = async () => {
-  try {
-    const value = await AsyncStorage.getItem('task');
-    if (value !== null) {
-      setTaskList(JSON.parse(value));
+  const getData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('task');
+      if (value !== null) {
+        setTaskList(JSON.parse(value));
+      }
+    } catch (e) {
+      console.log('Error loading data:', e);
     }
-  } catch (e) {
-    console.log('Error loading data:', e);
-  }
-};
+  };
 
   useEffect(() => {
     getData();
   }, []);
 
-  // Handle task confirmation (e.g., after properties are selected)
-  const handleTaskPropertiesConfirm = (taskData: any) => {
-  const updatedList = [...taskList, taskData];
-  setTaskList(updatedList);
-  setStringValue(JSON.stringify(updatedList));
-  setShowForm(false);
-};
+  const saveTaskList = (updatedList: any[]) => {
+    setTaskList(updatedList);
+    setStringValue(JSON.stringify(updatedList));
+  };
 
+  const handleTaskPropertiesConfirm = (taskData: any) => {
+    let updatedList = [...taskList];
+    if (editIndex !== null) {
+      updatedList[editIndex] = { ...taskData, completed: updatedList[editIndex].completed || false };
+      setEditIndex(null);
+    } else {
+      updatedList.push({ ...taskData, completed: false });
+    }
+    saveTaskList(updatedList);
+    setShowForm(false);
+  };
+
+  const deleteTask = (index: number) => {
+    const updatedList = [...taskList];
+    updatedList.splice(index, 1);
+    saveTaskList(updatedList);
+  };
+
+  const editTask = (index: number) => {
+    setEditIndex(index);
+    setShowForm(true);
+  };
+
+  const toggleComplete = (index: number) => {
+    const updatedList = [...taskList];
+    updatedList[index].completed = !updatedList[index].completed;
+
+    // Move completed tasks to bottom
+    updatedList.sort((a, b) => a.completed - b.completed);
+    saveTaskList(updatedList);
+  };
+
+  const completedCount = taskList.filter((task) => task.completed).length;
 
   return (
     <KeyboardAvoidingView
@@ -61,26 +89,51 @@ const getData = async () => {
     >
       <View>
         <Text style={styles.header}>Today Task</Text>
+        <Text style={styles.counter}>
+          {completedCount} / {taskList.length} completed
+        </Text>
       </View>
 
-      {showForm ? (
-        <View style={styles.taskPropertyContainer}>
-          <TaskProperties onConfirm={handleTaskPropertiesConfirm} />
-        </View>
-      ) : (
+{showForm ? (
+  <View style={{ flex: 1 }}>
+    <TouchableOpacity
+      onPress={() => {
+        setShowForm(false);
+        setEditIndex(null);
+      }}
+      style={styles.backButton}
+    >
+      <Text style={styles.backButtonText}>← Back</Text>
+    </TouchableOpacity>
+
+    <View style={styles.taskPropertyContainer}>
+      <TaskProperties
+        onConfirm={handleTaskPropertiesConfirm}
+        initialData={editIndex !== null ? taskList[editIndex] : null}
+      />
+    </View>
+  </View>
+) : (
+
         <>
           <FlatList
             data={taskList}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => <Task taskData = {item} />}
-            
+            keyExtractor={(_, index) => index.toString()}
+            renderItem={({ item, index }) => (
+              <Task
+                taskData={item}
+                onToggleComplete={() => toggleComplete(index)}
+                onDelete={() => deleteTask(index)}
+                onEdit={() => editTask(index)}
+              />
+            )}
           />
 
-          {/* Input Row */}
           <View style={styles.inputRow}>
             <TouchableOpacity
               style={styles.addButton}
               onPress={() => {
+                setEditIndex(null);
                 setShowForm(true);
               }}
             >
@@ -89,8 +142,6 @@ const getData = async () => {
           </View>
         </>
       )}
-
-
     </KeyboardAvoidingView>
   );
 }
@@ -102,24 +153,20 @@ const styles = StyleSheet.create({
   header: {
     textAlign: 'center',
     marginTop: 10,
-    marginBottom: 20,
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  counter: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginBottom: 10,
+    color: '#666',
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
     paddingHorizontal: 20,
-  },
-  textInput: {
-    flex: 1,
-    height: 50,
-    borderRadius: 20,
-    backgroundColor: '#F8F8FF',
-    paddingHorizontal: 10,
-    fontSize: 16,
-    textAlign: 'center',
   },
   addButton: {
     width: 50,
@@ -128,7 +175,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop:15,
+    marginTop: 15,
     marginLeft: 350,
   },
   plus: {
@@ -141,15 +188,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#f2f2f2',
     borderRadius: 10,
   },
-  confirmButton: {
-    marginTop: 15,
-    backgroundColor: '#4CAF50',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  confirmText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
+  backButton: {
+  paddingHorizontal: 15,
+  paddingVertical: 10,
+  marginTop: 20,
+},
+  backButtonText: {
+  fontSize: 18,
+  color: 'blue',
+},
+  
 });

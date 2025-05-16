@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import DropDownPicker from 'react-native-dropdown-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function TaskProperties({ onConfirm }: { onConfirm: (taskData: any) => void }) {
+export default function TaskProperties({ onConfirm }: { onConfirm: (taskData: any) => void ; initialData?:any; }) {
   const [taskName, setTaskName] = useState('');
   const [related, setRelated] = useState('');
   const [level, setLevel] = useState('');
