@@ -9,5 +9,6 @@ export default function RootLayout() {
   <Stack.Screen name = "goal" options={{title:"Goal"}}/>
   <Stack.Screen name = "journal" options={{title:"Journal"}}/>
 
+
   </Stack>;
 }
