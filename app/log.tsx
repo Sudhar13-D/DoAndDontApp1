@@ -1,58 +1,99 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
 
 type Habit = {
   id: string;
   title: string;
-  history: { [date: string]: boolean };
+  isDone: boolean;
+  history: Record<string, boolean>;
 };
 
 export default function LogScreen() {
   const [habits, setHabits] = useState<Habit[]>([]);
-  const router = useRouter();
+  const [allDates, setAllDates] = useState<string[]>([]);
 
   useEffect(() => {
-    loadHabits();
+    const loadLog = async () => {
+      const stored = await AsyncStorage.getItem('habits');
+      if (!stored) return;
+
+      const parsed: Habit[] = JSON.parse(stored);
+      setHabits(parsed);
+
+      const dateSet = new Set<string>();
+      parsed.forEach(habit => {
+        Object.keys(habit.history).forEach(date => dateSet.add(date));
+      });
+
+      const sortedDates = Array.from(dateSet).sort((a, b) => b.localeCompare(a));
+      setAllDates(sortedDates);
+    };
+
+    loadLog();
   }, []);
 
-  const loadHabits = async () => {
-    const stored = await AsyncStorage.getItem('habits');
-    if (stored) {
-      setHabits(JSON.parse(stored));
-    }
+  const getHabitConsistency = (habit: Habit) => {
+    const total = allDates.length;
+    const completed = allDates.filter(date => habit.history[date]).length;
+    return total === 0 ? '0%' : `${Math.round((completed / total) * 100)}%`;
   };
 
-  const getMonthFromDate = (dateStr: string) => dateStr.slice(0, 7); // "YYYY-MM"
-
-  const calculateStats = (habit: Habit) => {
-    const currentMonth = new Date().toISOString().slice(0, 7); // e.g., "2025-05"
-    const entries = Object.entries(habit.history || {});
-    const thisMonth = entries.filter(([date]) => getMonthFromDate(date) === currentMonth);
-
-    const totalDays = thisMonth.length;
-    const completedDays = thisMonth.filter(([, done]) => done).length;
-    const consistency = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
-
-    return { completedDays, totalDays, consistency };
+  const getDateConsistency = (date: string) => {
+    const total = habits.length;
+    const completed = habits.filter(habit => habit.history[date]).length;
+    return total === 0 ? '0%' : `${Math.round((completed / total) * 100)}%`;
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Habit Log</Text>
-      {habits.length === 0 && <Text>No habits found.</Text>}
-      {habits.map(habit => {
-        const { completedDays, totalDays, consistency } = calculateStats(habit);
-        return (
-          <View key={habit.id} style={styles.habitCard}>
-            <Text style={styles.habitTitle}>{habit.title}</Text>
-            <Text>Completed: {completedDays} / {totalDays} days this month</Text>
-            <Text>Consistency: {consistency}%</Text>
+    <ScrollView style={styles.container} horizontal>
+      <View>
+        {/* Header Row */}
+        <View style={styles.row}>
+          <Text style={[styles.cell, styles.headerCell]}>Date</Text>
+          {habits.map(habit => (
+            <Text key={habit.id} style={[styles.cell, styles.headerCell]}>
+              {habit.title}
+            </Text>
+          ))}
+          <Text style={[styles.cell, styles.headerCell]}>Daily Consistency</Text>
+        </View>
+
+        {/* Data Rows */}
+        {allDates.map(date => (
+          <View key={date} style={styles.row}>
+            <Text style={styles.cell}>{date}</Text>
+            {habits.map(habit => {
+              const status = habit.history[date];
+              return (
+                <Text
+                  key={habit.id + date}
+                  style={[
+                    styles.cell,
+                    { color: status ? 'green' : 'red' },
+                  ]}
+                >
+                  {status ? 'Completed' : 'Not Completed'}
+                </Text>
+              );
+            })}
+            <Text style={[styles.cell, { fontWeight: 'bold' }]}>
+              {getDateConsistency(date)}
+            </Text>
           </View>
-        );
-      })}
-      <Text style={styles.back} onPress={() => router.back()}>&larr; Back</Text>
+        ))}
+
+        {/* Final Row: Per-Habit Consistency */}
+        <View style={[styles.row, { backgroundColor: '#f0f0f0' }]}>
+          <Text style={[styles.cell, styles.headerCell]}>Habit Consistency</Text>
+          {habits.map(habit => (
+            <Text key={habit.id + '-consistency'} style={[styles.cell, styles.headerCell]}>
+              {getHabitConsistency(habit)}
+            </Text>
+          ))}
+          <Text style={styles.cell}></Text> {/* Empty cell to align */}
+        </View>
+      </View>
     </ScrollView>
   );
 }
@@ -61,28 +102,20 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: '#fff',
-    flex: 1
   },
-  header: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 20
-  },
-  habitCard: {
-    padding: 12,
-    borderWidth: 1,
+  row: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 12
+    paddingVertical: 6,
   },
-  habitTitle: {
-    fontSize: 18,
+  cell: {
+    width: 130,
+    textAlign: 'center',
+    fontSize: 14,
+  },
+  headerCell: {
     fontWeight: 'bold',
-    marginBottom: 4
+    fontSize: 16,
   },
-  back: {
-    marginTop: 20,
-    color: 'blue',
-    textDecorationLine: 'underline'
-  }
 });

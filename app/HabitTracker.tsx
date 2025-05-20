@@ -1,5 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Switch, StyleSheet, ScrollView, TextInput, Button, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 
@@ -7,137 +16,125 @@ type Habit = {
   id: string;
   title: string;
   isDone: boolean;
-  history: { [date: string]: boolean }; // e.g., "2025-05-14": true/false
+  history: Record<string, boolean>;
 };
 
-export default function HabitTrackerScreen() {
+export default function HabitTracker() {
   const [habits, setHabits] = useState<Habit[]>([]);
-  const [newHabitTitle, setNewHabitTitle] = useState('');
+  const [newHabit, setNewHabit] = useState('');
+  const today = new Date().toISOString().split('T')[0];
   const router = useRouter();
 
   useEffect(() => {
-    initializeHabits();
+    loadHabits();
   }, []);
 
-  const initializeHabits = async () => {
-    await checkDailyUpdate();
+  const loadHabits = async () => {
     const stored = await AsyncStorage.getItem('habits');
-    if (stored) {
-      setHabits(JSON.parse(stored));
-    }
+    const parsed: Habit[] = stored ? JSON.parse(stored) : [];
+
+    const updated = parsed.map(habit => {
+      if (habit.history[today] === undefined) {
+        habit.history[today] = false;
+      }
+      return {
+        ...habit,
+        isDone: habit.history[today],
+      };
+    });
+
+    await AsyncStorage.setItem('habits', JSON.stringify(updated));
+    setHabits(updated);
   };
 
-  const getToday = () => new Date().toISOString().split('T')[0];
-
-  const checkDailyUpdate = async () => {
-    const lastDate = await AsyncStorage.getItem('lastDate');
-    const today = getToday();
-    if (lastDate !== today) {
-      const stored = await AsyncStorage.getItem('habits');
-      if (stored) {
-        const habitArray: Habit[] = JSON.parse(stored).map((habit: Habit) => {
-          if (!(habit.history && habit.history[today])) {
-            habit.history = habit.history || {};
-            habit.history[today] = false; // default to not completed
-          }
-          habit.isDone = false;
-          return habit;
-        });
-        await AsyncStorage.setItem('habits', JSON.stringify(habitArray));
-      }
-      await AsyncStorage.setItem('lastDate', today);
-    }
+  const saveHabits = async (updated: Habit[]) => {
+    await AsyncStorage.setItem('habits', JSON.stringify(updated));
+    setHabits(updated);
   };
 
   const toggleHabit = async (id: string) => {
-    const today = getToday();
     const updated = habits.map(habit => {
       if (habit.id === id) {
-        const isNowDone = !habit.isDone;
-        habit.isDone = isNowDone;
-        habit.history = habit.history || {};
-        habit.history[today] = isNowDone;
+        const newStatus = !habit.isDone;
+        habit.isDone = newStatus;
+        habit.history[today] = newStatus;
       }
       return habit;
     });
-    setHabits(updated);
-    await AsyncStorage.setItem('habits', JSON.stringify(updated));
+    saveHabits(updated);
   };
 
   const addHabit = async () => {
-    if (!newHabitTitle.trim()) return Alert.alert('Please enter a habit title');
-    const newHabit: Habit = {
+    if (!newHabit.trim()) return Alert.alert('Please enter a habit');
+
+    const newHabitObj: Habit = {
       id: Date.now().toString(),
-      title: newHabitTitle.trim(),
+      title: newHabit.trim(),
       isDone: false,
-      history: {},
+      history: { [today]: false },
     };
-    const updated = [...habits, newHabit];
-    setHabits(updated);
-    await AsyncStorage.setItem('habits', JSON.stringify(updated));
-    setNewHabitTitle('');
+
+    const updated = [...habits, newHabitObj];
+    await saveHabits(updated);
+    setNewHabit('');
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.topBar}>
-        <Button title="View Log" onPress={() => router.push('../log')} />
+        <Button title="View Log" onPress={() => router.push('/log')} />
       </View>
-
       <Text style={styles.header}>Today's Habits</Text>
+      <TextInput
+        placeholder="Enter new habit"
+        value={newHabit}
+        onChangeText={setNewHabit}
+        style={styles.input}
+      />
+      <Button title="Add Habit" onPress={addHabit} />
+
       {habits.map(habit => (
         <View key={habit.id} style={styles.habitItem}>
           <Text style={styles.habitTitle}>{habit.title}</Text>
-          <Switch value={habit.isDone} onValueChange={() => toggleHabit(habit.id)} />
+          <TouchableOpacity
+            onPress={() => toggleHabit(habit.id)}
+            style={[
+              styles.toggleButton,
+              { backgroundColor: habit.isDone ? 'green' : 'red' },
+            ]}
+          >
+            <Text style={styles.buttonText}>
+              {habit.isDone ? 'Completed' : 'Not Completed'}
+            </Text>
+          </TouchableOpacity>
         </View>
       ))}
-
-      <View style={styles.inputSection}>
-        <TextInput
-          style={styles.input}
-          placeholder="Add new habit..."
-          value={newHabitTitle}
-          onChangeText={setNewHabitTitle}
-        />
-        <Button title="Add" onPress={addHabit} />
-      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#fff'
-  },
-  topBar: {
-    alignItems: 'flex-end'
-  },
-  header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 16
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  topBar: { alignItems: 'flex-end', marginBottom: 10 },
+  header: { fontSize: 22, fontWeight: 'bold', marginBottom: 12 },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginBottom: 10,
+    padding: 8,
+    borderRadius: 4,
   },
   habitItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8
+    marginVertical: 8,
   },
-  habitTitle: {
-    fontSize: 16
+  habitTitle: { fontSize: 16, flex: 1 },
+  toggleButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
   },
-  inputSection: {
-    flexDirection: 'row',
-    marginTop: 20,
-    alignItems: 'center'
-  },
-  input: {
-    flex: 1,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    marginRight: 10,
-    paddingVertical: 4
-  }
+  buttonText: { color: '#fff' },
 });
