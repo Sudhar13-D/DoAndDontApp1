@@ -68,10 +68,12 @@ useEffect(()=>{
           <Text style={styles.buttonText}>Goal</Text>
         </TouchableOpacity>
         </Link>
-        
+        <Link href="../HabitTracker" asChild>
         <TouchableOpacity style={styles.button4}>
           <Text style={styles.buttonText}>Habit Tracker</Text>
         </TouchableOpacity>
+        </Link>
+        
         
       </View>
     </View>
