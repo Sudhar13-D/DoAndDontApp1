@@ -109,7 +109,7 @@ export default function GoalPage() {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => handleDeleteGoal(item.id)} style={styles.deleteButton}>
                   <Image
-                   source={require('../assets/image/dustbin.png')}
+                   source={require('../assets/images/dustbin.png')}
                    style={{ width: 24, height: 24, tintColor: 'grey' }}
                    />
                 </TouchableOpacity>

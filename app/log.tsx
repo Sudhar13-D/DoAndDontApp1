@@ -15,19 +15,23 @@ export default function LogScreen() {
 
   useEffect(() => {
     const loadLog = async () => {
-      const stored = await AsyncStorage.getItem('habits');
-      if (!stored) return;
+      try {
+        const stored = await AsyncStorage.getItem('habits');
+        if (!stored) return;
 
-      const parsed: Habit[] = JSON.parse(stored);
-      setHabits(parsed);
+        const parsed: Habit[] = JSON.parse(stored);
+        setHabits(parsed);
 
-      const dateSet = new Set<string>();
-      parsed.forEach(habit => {
-        Object.keys(habit.history).forEach(date => dateSet.add(date));
-      });
+        const dateSet = new Set<string>();
+        parsed.forEach(habit => {
+          Object.keys(habit.history).forEach(date => dateSet.add(date));
+        });
 
-      const sortedDates = Array.from(dateSet).sort((a, b) => b.localeCompare(a));
-      setAllDates(sortedDates);
+        const sortedDates = Array.from(dateSet).sort((a, b) => b.localeCompare(a));
+        setAllDates(sortedDates);
+      } catch (e) {
+        console.error('Error loading log:', e);
+      }
     };
 
     loadLog();
@@ -48,7 +52,7 @@ export default function LogScreen() {
   return (
     <ScrollView style={styles.container} horizontal>
       <View>
-        {/* Header Row */}
+        {/* Table Header */}
         <View style={styles.row}>
           <Text style={[styles.cell, styles.headerCell]}>Date</Text>
           {habits.map(habit => (
@@ -56,10 +60,10 @@ export default function LogScreen() {
               {habit.title}
             </Text>
           ))}
-          <Text style={[styles.cell, styles.headerCell]}>Daily Consistency</Text>
+          <Text style={[styles.cell, styles.headerCell]}>Daily %</Text>
         </View>
 
-        {/* Data Rows */}
+        {/* Table Rows */}
         {allDates.map(date => (
           <View key={date} style={styles.row}>
             <Text style={styles.cell}>{date}</Text>
@@ -77,21 +81,21 @@ export default function LogScreen() {
                 </Text>
               );
             })}
-            <Text style={[styles.cell, { fontWeight: 'bold' }]}>
+            <Text style={[styles.cell, styles.headerCell]}>
               {getDateConsistency(date)}
             </Text>
           </View>
         ))}
 
-        {/* Final Row: Per-Habit Consistency */}
+        {/* Final Consistency Row */}
         <View style={[styles.row, { backgroundColor: '#f0f0f0' }]}>
-          <Text style={[styles.cell, styles.headerCell]}>Habit Consistency</Text>
+          <Text style={[styles.cell, styles.headerCell]}>Habit %</Text>
           {habits.map(habit => (
             <Text key={habit.id + '-consistency'} style={[styles.cell, styles.headerCell]}>
               {getHabitConsistency(habit)}
             </Text>
           ))}
-          <Text style={styles.cell}></Text> {/* Empty cell to align */}
+          <Text style={styles.cell}></Text>
         </View>
       </View>
     </ScrollView>
@@ -118,8 +122,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-<<<<<<< HEAD
 });
-=======
-});
->>>>>>> 8e0b8e482845db18e917baf586a8c05df216ad1f
