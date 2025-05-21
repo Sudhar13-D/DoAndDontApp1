@@ -11,13 +11,13 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Task from '@/component/Task';
 import TaskProperties from '@/component/TaskProperties';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function DoList() {
   const [taskList, setTaskList] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
-  // Save to AsyncStorage
   const setStringValue = async (value: string) => {
     try {
       await AsyncStorage.setItem('task', value);
@@ -26,7 +26,6 @@ export default function DoList() {
     }
   };
 
-  // Load from AsyncStorage
   const getData = async () => {
     try {
       const value = await AsyncStorage.getItem('task');
@@ -73,8 +72,6 @@ export default function DoList() {
   const toggleComplete = (index: number) => {
     const updatedList = [...taskList];
     updatedList[index].completed = !updatedList[index].completed;
-
-    // Move completed tasks to bottom
     updatedList.sort((a, b) => a.completed - b.completed);
     saveTaskList(updatedList);
   };
@@ -82,68 +79,75 @@ export default function DoList() {
   const completedCount = taskList.filter((task) => task.completed).length;
 
   return (
+  <SafeAreaView style={{ flex: 1 }}>
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={100}
     >
-      <View>
-        <Text style={styles.header}>Today Task</Text>
-        <Text style={styles.counter}>
-          {completedCount} / {taskList.length} completed
-        </Text>
-      </View>
+      <FlatList
+        data={showForm ? [] : taskList}
+        keyExtractor={(_, index) => index.toString()}
+        ListHeaderComponent={
+          showForm ? (
+            <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowForm(false);
+                  setEditIndex(null);
+                }}
+                style={styles.backButton}
+              >
+                <Text style={styles.backButtonText}>← Back</Text>
+              </TouchableOpacity>
 
-{showForm ? (
-  <View style={{ flex: 1 }}>
-    <TouchableOpacity
-      onPress={() => {
-        setShowForm(false);
-        setEditIndex(null);
-      }}
-      style={styles.backButton}
-    >
-      <Text style={styles.backButtonText}>← Back</Text>
-    </TouchableOpacity>
-
-    <View style={styles.taskPropertyContainer}>
-      <TaskProperties
-        onConfirm={handleTaskPropertiesConfirm}
-        initialData={editIndex !== null ? taskList[editIndex] : null}
+              <View style={styles.taskPropertyContainer}>
+                <TaskProperties
+                  onConfirm={handleTaskPropertiesConfirm}
+                  initialData={editIndex !== null ? taskList[editIndex] : null}
+                />
+              </View>
+            </View>
+          ) : (
+            <View>
+              <Text style={styles.header}>Today Task</Text>
+              <Text style={styles.counter}>
+                {completedCount} / {taskList.length} completed
+              </Text>
+            </View>
+          )
+        }
+        renderItem={
+          !showForm
+            ? ({ item, index }) => (
+                <Task
+                  taskData={item}
+                  onToggleComplete={() => toggleComplete(index)}
+                  onDelete={() => deleteTask(index)}
+                  onEdit={() => editTask(index)}
+                />
+              )
+            : undefined
+        }
+        ListFooterComponent={
+          !showForm ? (
+            <View style={styles.inputRow}>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => {
+                  setEditIndex(null);
+                  setShowForm(true);
+                }}
+              >
+                <Text style={styles.plus}>+</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
       />
-    </View>
-  </View>
-) : (
-
-        <>
-          <FlatList
-            data={taskList}
-            keyExtractor={(_, index) => index.toString()}
-            renderItem={({ item, index }) => (
-              <Task
-                taskData={item}
-                onToggleComplete={() => toggleComplete(index)}
-                onDelete={() => deleteTask(index)}
-                onEdit={() => editTask(index)}
-              />
-            )}
-          />
-
-          <View style={styles.inputRow}>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => {
-                setEditIndex(null);
-                setShowForm(true);
-              }}
-            >
-              <Text style={styles.plus}>+</Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
     </KeyboardAvoidingView>
-  );
+  </SafeAreaView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -189,13 +193,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   backButton: {
-  paddingHorizontal: 15,
-  paddingVertical: 10,
-  marginTop: 20,
-},
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginTop: 20,
+  },
   backButtonText: {
-  fontSize: 18,
-  color: 'blue',
-},
-  
+    fontSize: 18,
+    color: 'blue',
+  },
 });

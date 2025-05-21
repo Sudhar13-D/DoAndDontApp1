@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: 15,
     marginVertical: 8,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderRadius: 12,
     borderColor: '#ccc',
     backgroundColor: 'white',
@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'green',
+    borderRadius:12,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     paddingHorizontal: 15,

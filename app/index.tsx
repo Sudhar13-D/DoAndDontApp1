@@ -63,7 +63,7 @@ useEffect(()=>{
           <Text style={styles.buttonText}>Journal</Text>
         </TouchableOpacity>
         </Link>
-        <Link href="../Goal" asChild>
+        <Link href="../goal" asChild>
         <TouchableOpacity style={styles.button3} >
           <Text style={styles.buttonText}>Goal</Text>
         </TouchableOpacity>
