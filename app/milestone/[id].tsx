@@ -1,95 +1,122 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { View, Text, TextInput, Button, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { v4 as uuidv4 } from 'uuid';
+import { useLocalSearchParams } from 'expo-router';
 
-export default function MilestoneScreen() {
-  const { id } = useLocalSearchParams(); // goal ID
-  const [milestones, setMilestones] = useState<any[]>([]);
-  const [milestoneText, setMilestoneText] = useState('');
-  const [timePeriod, setTimePeriod] = useState('');
+export default function DailyTaskScreen() {
+  const { id } = useLocalSearchParams();
+  const [goal, setGoal] = useState<any>(null);
+  const [todayTask, setTodayTask] = useState('');
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [dayIndex, setDayIndex] = useState(1);
 
-  const STORAGE_KEY = `milestones-${id}`;
+  const TASK_KEY = `tasks-${id}`;
 
   useEffect(() => {
-    const loadMilestones = async () => {
-      const data = await AsyncStorage.getItem(STORAGE_KEY);
-      if (data) setMilestones(JSON.parse(data));
+    const fetchGoalAndTasks = async () => {
+      try {
+        const goalsData = await AsyncStorage.getItem('goals');
+        const goals = goalsData ? JSON.parse(goalsData) : [];
+        const foundGoal = goals.find((g: any) => g.id === id);
+        setGoal(foundGoal);
+
+        const tasksData = await AsyncStorage.getItem(TASK_KEY);
+        const allTasks = tasksData ? JSON.parse(tasksData) : [];
+        setTasks(allTasks);
+
+        if (foundGoal) {
+          const created = new Date(foundGoal.createdAt);
+          const today = new Date();
+          const diffTime = today.getTime() - created.getTime();
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          setDayIndex(diffDays + 1);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     };
-    loadMilestones();
+
+    fetchGoalAndTasks();
   }, []);
 
-  const saveMilestones = async (newList: any[]) => {
-    setMilestones(newList);
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newList));
-  };
+  const handleSaveTodayTask = async () => {
+    if (!todayTask.trim()) {
+      Alert.alert('Input Required', 'Please enter a task for today.');
+      return;
+    }
 
-  const addMilestone = () => {
-    if (milestoneText.trim() === '') return;
-    const newMilestone = {
-      id: uuidv4(),
-      text: milestoneText,
-      timePeriod,
+    const existingTaskIndex = tasks.findIndex((t) => t.day === dayIndex);
+    if (existingTaskIndex !== -1) {
+      Alert.alert('Task Exists', 'You have already added a task for today.');
+      return;
+    }
+
+    const newTask = {
+      day: dayIndex,
+      text: todayTask.trim(),
       completed: false,
+      date: new Date().toISOString(),
     };
-    const updated = [...milestones, newMilestone];
-    saveMilestones(updated);
-    setMilestoneText('');
-    setTimePeriod('');
+
+    const updatedTasks = [...tasks, newTask];
+    setTasks(updatedTasks);
+    setTodayTask('');
+    await AsyncStorage.setItem(TASK_KEY, JSON.stringify(updatedTasks));
   };
 
-  const toggleCompleted = (index: number) => {
-    const updated = [...milestones];
-    updated[index].completed = !updated[index].completed;
-    saveMilestones(updated);
+  const markComplete = async (index: number) => {
+    const updatedTasks = [...tasks];
+    updatedTasks[index].completed = true;
+    setTasks(updatedTasks);
+    await AsyncStorage.setItem(TASK_KEY, JSON.stringify(updatedTasks));
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Milestones for Goal: {id}</Text>
+      {goal && (
+        <>
+          <Text style={styles.title}>{goal.title}</Text>
+          <Text style={styles.subtitle}>Day {dayIndex} of {goal.duration}</Text>
 
-      <TextInput
-        placeholder="Enter milestone"
-        value={milestoneText}
-        onChangeText={setMilestoneText}
-        style={styles.input}
-      />
-      <TextInput
-        placeholder="Enter time period (e.g. 2 weeks)"
-        value={timePeriod}
-        onChangeText={setTimePeriod}
-        style={styles.input}
-      />
-      <Button title="Add Milestone" onPress={addMilestone} />
-
-      <FlatList
-        data={milestones}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <TouchableOpacity
-            onPress={() => toggleCompleted(index)}
-            style={[styles.milestoneItem, item.completed && styles.completed]}
-          >
-            <Text>{item.text} ({item.timePeriod})</Text>
-            <Text>{item.completed ? '✅' : '❌'}</Text>
+          <Text style={styles.label}>What will you do today?</Text>
+          <TextInput
+            value={todayTask}
+            onChangeText={setTodayTask}
+            placeholder="e.g., Practice chords for 30 min"
+            style={styles.input}
+          />
+          <TouchableOpacity style={styles.button} onPress={handleSaveTodayTask}>
+            <Text style={styles.buttonText}>Save Task</Text>
           </TouchableOpacity>
-        )}
-      />
+
+          <Text style={styles.label}>Progress:</Text>
+          <FlatList
+            data={tasks.sort((a, b) => a.day - b.day)}
+            keyExtractor={(item, idx) => idx.toString()}
+            renderItem={({ item, index }) => (
+              <View style={styles.taskItem}>
+                <Text>Day {item.day}: {item.text}</Text>
+                {!item.completed ? (
+                  <Button title="Mark Done" onPress={() => markComplete(index)} />
+                ) : (
+                  <Text style={{ color: 'green' }}>✅ Completed</Text>
+                )}
+              </View>
+            )}
+          />
+        </>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
-  input: {
-    borderWidth: 1, borderColor: '#ccc', borderRadius: 5,
-    padding: 10, marginBottom: 10,
-  },
-  milestoneItem: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    padding: 15, borderBottomWidth: 1, borderColor: '#ddd',
-  },
-  completed: { backgroundColor: '#d3ffd3' },
+  container: { padding: 20, marginTop: 30 },
+  title: { fontSize: 22, fontWeight: 'bold' },
+  subtitle: { marginBottom: 10, color: 'gray' },
+  label: { marginTop: 20, fontSize: 16 },
+  input: { borderWidth: 1, padding: 10, marginTop: 5, borderRadius: 5 },
+  button: { backgroundColor: '#000', marginTop: 10, padding: 15, borderRadius: 5 },
+  buttonText: { color: '#fff', textAlign: 'center' },
+  taskItem: { marginTop: 10, borderBottomWidth: 1, paddingBottom: 10 },
 });

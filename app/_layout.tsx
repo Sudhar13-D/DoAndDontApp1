@@ -9,6 +9,9 @@ export default function RootLayout() {
   <Stack.Screen name = "DontList" options={{title:"Dont List"}}/>
   <Stack.Screen name = "goal" options={{title:"Goal"}}/>
   <Stack.Screen name = "journal" options={{title:"Journal"}}/>
+  <Stack.Screen name = "HabitTracker" options={{title:"HabitTracker"}}/>
+  <Stack.Screen name = "log" options={{title:"Log"}}/>
+  
 
   </Stack>;
 }

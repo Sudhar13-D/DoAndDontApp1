@@ -1,88 +1,179 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Link } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { Image } from 'react-native';
 
-
-const generateId = () => Math.random().toString(36).substr(2, 9);
+const generateId = () => Math.random().toString(36).substring(2, 9);
 
 type Goal = {
   id: string;
   title: string;
+  duration: number;
+  createdAt: string;
 };
 
 export default function GoalPage() {
+  const [goal, setGoal] = useState('');
+  const [days, setDays] = useState('');
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [newGoal, setNewGoal] = useState('');
 
-  useEffect(() => {
-    const loadGoals = async () => {
-      const stored = await AsyncStorage.getItem('goals');
-      if (stored) setGoals(JSON.parse(stored));
+  const router = useRouter();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadGoals = async () => {
+        const stored = await AsyncStorage.getItem('goals');
+        setGoals(stored ? JSON.parse(stored) : []);
+      };
+      loadGoals();
+    }, [])
+  );
+
+  const handleCreateGoal = async () => {
+    if (!goal.trim() || !days.trim()) {
+      Alert.alert('Missing input', 'Please enter both goal and number of days');
+      return;
+    }
+
+    const newGoal = {
+      id: generateId(),
+      title: goal.trim(),
+      duration: parseInt(days),
+      createdAt: new Date().toISOString()
     };
-    loadGoals();
-  }, []);
+    const updatedGoals = [...goals, newGoal];
 
-  const saveGoals = async (updatedGoals: Goal[]) => {
     await AsyncStorage.setItem('goals', JSON.stringify(updatedGoals));
+    setGoal('');
+    setDays('');
     setGoals(updatedGoals);
+
+    router.push(`/milestone/${newGoal.id}`);
   };
 
-  const handleAddGoal = () => {
-    if (newGoal.trim() === '') return;
-    const updatedGoals = [...goals, { id: generateId(), title: newGoal.trim() }];
-    saveGoals(updatedGoals);
-    setNewGoal('');
+  const handleDeleteGoal = async (id: string) => {
+    Alert.alert(
+      'Delete Goal',
+      'Are you sure you want to delete this goal?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const filteredGoals = goals.filter(goal => goal.id !== id);
+            setGoals(filteredGoals);
+            await AsyncStorage.setItem('goals', JSON.stringify(filteredGoals));
+          }
+        }
+      ]
+    );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Enter Your Goals</Text>
-
+      <Text style={styles.label}>Enter Your Goal</Text>
       <TextInput
-        placeholder="New Goal"
-        value={newGoal}
-        onChangeText={setNewGoal}
+        value={goal}
+        onChangeText={setGoal}
+        placeholder="e.g., Learn Guitar"
         style={styles.input}
+        placeholderTextColor="#6699CC"
       />
-      <TouchableOpacity style={styles.button} onPress={handleAddGoal}>
-        <Text style={styles.buttonText}>Add Goal</Text>
+      <Text style={styles.label}>In how many days?</Text>
+      <TextInput
+        value={days}
+        onChangeText={setDays}
+        placeholder="e.g., 30"
+        keyboardType="numeric"
+        style={styles.input}
+        placeholderTextColor="#6699CC"
+      />
+      <TouchableOpacity style={styles.button} onPress={handleCreateGoal}>
+        <Text style={styles.buttonText}>Start Goal</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={goals}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Link href={{ pathname: '/milestone/[id]', params: { id: item.id } } as never} asChild>
-            <TouchableOpacity style={styles.goalBox}>
-              <Text style={styles.goalText}>{item.title}</Text>
-            </TouchableOpacity>
-          </Link>
-        )}
-        ListEmptyComponent={<Text style={{ marginTop: 20 }}>No goals added yet.</Text>}
-        contentContainerStyle={{ paddingTop: 20 }}
-      />
+      {goals.length > 0 && (
+        <>
+          <Text style={styles.label}>Your Goals</Text>
+          <FlatList
+            data={goals}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={[styles.goalItem, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                <TouchableOpacity onPress={() => router.push(`/milestone/${item.id}`)}>
+                  <Text style={styles.goalItemText}>
+                    {item.title} ({item.duration} days)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDeleteGoal(item.id)} style={styles.deleteButton}>
+                  <Image
+                   source={require('../assets/image/dustbin.png')}
+                   style={{ width: 24, height: 24, tintColor: 'grey' }}
+                   />
+                </TouchableOpacity>
+              </View>
+            )}
+          />
+        </>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  label: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
-  input: { borderWidth: 1, borderColor: '#aaa', borderRadius: 10, padding: 10, fontSize: 16 },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 10,
+  container: { 
+    padding: 20, 
+    marginTop: 40, 
+    backgroundColor: '#F0F8FF',  // very light blue background
+    flex: 1,
+  },
+  label: { 
+    fontSize: 18, 
+    marginBottom: 5, 
+    color: '#003366',  // dark blue text
+    fontWeight: '600',
+  },
+  input: { 
+    borderWidth: 1, 
+    padding: 10, 
+    marginBottom: 15, 
+    borderRadius: 5, 
+    borderColor: '#3399FF', 
+    backgroundColor: '#FFFFFF',
+    color: '#003366',
+  },
+  button: { 
+    backgroundColor: '#007AFF',  // bright blue button
+    padding: 15, 
+    borderRadius: 5, 
     marginBottom: 20,
   },
-  buttonText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
-  goalBox: {
-    backgroundColor: '#f0f8ff',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
+  buttonText: { 
+    color: '#FFFFFF', 
+    textAlign: 'center', 
+    fontWeight: 'bold',
+    fontSize: 16,
   },
-  goalText: { fontSize: 18 },
+  goalItem: { 
+    padding: 10, 
+    backgroundColor: '#CCE5FF',  // lighter blue box for goals
+    marginBottom: 10, 
+    borderRadius: 5,
+  },
+  goalItemText: {
+    color: '#003366',
+    fontWeight: '500',
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30', // red delete button
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
