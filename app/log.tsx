@@ -118,4 +118,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+<<<<<<< HEAD
 });
+=======
+});
+>>>>>>> 8e0b8e482845db18e917baf586a8c05df216ad1f
