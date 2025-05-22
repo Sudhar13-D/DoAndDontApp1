@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -78,28 +78,31 @@ export default function DailyTaskScreen() {
           <Text style={styles.title}>{goal.title}</Text>
           <Text style={styles.subtitle}>Day {dayIndex} of {goal.duration}</Text>
 
-          <Text style={styles.label}>What will you do today?</Text>
+          <Text style={styles.label}>Today's Task</Text>
           <TextInput
             value={todayTask}
             onChangeText={setTodayTask}
             placeholder="e.g., Practice chords for 30 min"
             style={styles.input}
+            placeholderTextColor="#6699CC"
           />
           <TouchableOpacity style={styles.button} onPress={handleSaveTodayTask}>
             <Text style={styles.buttonText}>Save Task</Text>
           </TouchableOpacity>
 
-          <Text style={styles.label}>Progress:</Text>
+          <Text style={styles.label}>Progress</Text>
           <FlatList
             data={tasks.sort((a, b) => a.day - b.day)}
             keyExtractor={(item, idx) => idx.toString()}
             renderItem={({ item, index }) => (
               <View style={styles.taskItem}>
-                <Text>Day {item.day}: {item.text}</Text>
+                <Text style={styles.taskText}>Day {item.day}: {item.text}</Text>
                 {!item.completed ? (
-                  <Button title="Mark Done" onPress={() => markComplete(index)} />
+                  <TouchableOpacity style={styles.completeButton} onPress={() => markComplete(index)}>
+                    <Text style={styles.completeButtonText}>Mark Done</Text>
+                  </TouchableOpacity>
                 ) : (
-                  <Text style={{ color: 'green' }}>✅ Completed</Text>
+                  <Text style={styles.completedText}>✅ Completed</Text>
                 )}
               </View>
             )}
@@ -111,12 +114,72 @@ export default function DailyTaskScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, marginTop: 30 },
-  title: { fontSize: 22, fontWeight: 'bold' },
-  subtitle: { marginBottom: 10, color: 'gray' },
-  label: { marginTop: 20, fontSize: 16 },
-  input: { borderWidth: 1, padding: 10, marginTop: 5, borderRadius: 5 },
-  button: { backgroundColor: '#000', marginTop: 10, padding: 15, borderRadius: 5 },
-  buttonText: { color: '#fff', textAlign: 'center' },
-  taskItem: { marginTop: 10, borderBottomWidth: 1, paddingBottom: 10 },
+  container: {
+    padding: 20,
+    marginTop: 40,
+    backgroundColor: '#F0F8FF',
+    flex: 1,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#003366',
+  },
+  subtitle: {
+    color: '#555',
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 18,
+    marginTop: 20,
+    marginBottom: 5,
+    color: '#003366',
+    fontWeight: '600',
+  },
+  input: {
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 5,
+    borderColor: '#3399FF',
+    backgroundColor: '#FFFFFF',
+    color: '#003366',
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 5,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  taskItem: {
+    padding: 10,
+    backgroundColor: '#CCE5FF',
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  taskText: {
+    color: '#003366',
+    fontWeight: '500',
+    marginBottom: 5,
+  },
+  completedText: {
+    color: 'green',
+    fontWeight: 'bold',
+  },
+  completeButton: {
+    backgroundColor: '#00CC66',
+    padding: 8,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+  },
+  completeButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
 });

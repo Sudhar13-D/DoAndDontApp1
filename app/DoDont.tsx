@@ -1,44 +1,59 @@
-import { Image, StyleSheet, Platform , Button, Alert ,TextInput,View, TouchableOpacity,Text} from 'react-native';
+import { Image, StyleSheet, Platform, Button, Alert, TextInput, View, TouchableOpacity, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import {RootStackParamList} from '@/app/type';
+import { RootStackParamList } from '@/app/type';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Link } from 'expo-router';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function DoDont() {
-    const navigation = useNavigation<NavigationProp>();
-return(
-    
-    <View style ={{flex: 1,backgroundColor: 'white'}} >
-    <Text style = {{textAlign:'center',marginTop:50}}> 
-        Hi Sudhar!!
-    </Text>
-    <Text style = {{textAlign:'center',marginTop:8}}>Welcome to Do's &Dont 
-        </Text>
-    <TextInput style = {styles.motivQouteContainer} 
-    placeholder="Today's Motivational Quotes!!"/>
-    <View style = {styles.doButton} >
-      <Link href ="../DoDont/DoList" asChild>
-    <TouchableOpacity 
-  style={styles.containerButton}>
-  <Text style={{ textAlign: 'center' }}>Do</Text>
-</TouchableOpacity>
-</Link>
+  const navigation = useNavigation<NavigationProp>();
+  const [userName, setUserName] = useState<string>('');
 
+  useEffect(() => {
+    const loadName = async () => {
+      const storedName = await AsyncStorage.getItem('userName');
+      if (storedName) setUserName(storedName);
+    };
+    loadName();
+  }, []);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: 'white' }}>
+      <Text style={{ textAlign: 'center', marginTop: 50 }}>
+        Hi {userName || 'there'}!!
+      </Text>
+      <Text style={{ textAlign: 'center', marginTop: 8 }}>
+        Welcome to Do's & Don'ts
+      </Text>
+
+      <TextInput
+        style={styles.motivQouteContainer}
+        placeholder="Today's Motivational Quotes!!"
+      />
+
+      <View style={styles.doButton}>
+        <Link href="../DoDont/DoList" asChild>
+          <TouchableOpacity style={styles.containerButton}>
+            <Text style={{ textAlign: 'center' }}>Do</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+
+      <View style={styles.dontButton}>
+        <Link href="../DoDont/DontList" asChild>
+          <TouchableOpacity style={styles.containerButton2}>
+            <Text style={{ textAlign: 'center' }}>Don't</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
+
+      <View style={styles.Nooftaskcompleted}>
+        <Text>No of task completed</Text>
+      </View>
     </View>
-    <View style = {styles.dontButton}>
-      <Link href ="../DoDont/DontList" asChild>
-    <TouchableOpacity 
-        style = {styles.containerButton2}>
-     <Text style ={{textAlign:'center'}} >Don't</Text>
-    </TouchableOpacity>
-    </Link>
-   </View>
-   <View style = {styles.Nooftaskcompleted}>
-     <Text>No of task completed</Text>
-   </View>
-
-  </View>
   );
 }
 
@@ -48,7 +63,7 @@ const styles = StyleSheet.create({
     padding: 80,
     borderRadius: 20,
     textAlign: 'center',
-    fontSize:16,
+    fontSize: 16,
     backgroundColor: 'orange',
   },
   containerButton: {
@@ -99,16 +114,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 40,
   },
-  Nooftaskcompleted:{
-    marginTop:50,
-    margin:17.5,
-    width:400,
-    height:200,
-    borderRadius:20,
-    backgroundColor:"grey",
-    textAlign:"center",
-    alignItems:"center",
-    justifyContent:"center"
-    
-  }
+  Nooftaskcompleted: {
+    marginTop: 50,
+    margin: 17.5,
+    width: 400,
+    height: 200,
+    borderRadius: 20,
+    backgroundColor: 'grey',
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

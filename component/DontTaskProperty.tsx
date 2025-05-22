@@ -97,7 +97,7 @@ export default function DontTaskProperties({ onConfirm }: { onConfirm: (taskData
         </View>
 
         <Text style={styles.header}>Temptation Time Duration</Text>
-        <View style={styles.row}>
+         <View style={styles.row}>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -105,23 +105,23 @@ export default function DontTaskProperties({ onConfirm }: { onConfirm: (taskData
             onChangeText={setAllocatedTime}
             placeholder="00"
           />
-          <View style={styles.dropdown}>
+          <View style={[styles.dropdown, { zIndex: 3000 }]}>
             <DropDownPicker
               open={unitOpen}
               value={unitValue}
               items={unitItems}
+             
               setOpen={setUnitOpen}
               setValue={setUnitValue}
               setItems={setUnitItems}
               placeholder="Hrs/Mins"
               zIndex={1000}
-              style={{ height: 40 }}
             />
           </View>
         </View>
 
         <Text style={styles.header}>Likely Time to Slip</Text>
-        <View style={styles.row}>
+         <View style={styles.row}>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -129,17 +129,18 @@ export default function DontTaskProperties({ onConfirm }: { onConfirm: (taskData
             onChangeText={setScheduledTime}
             placeholder="00"
           />
-          <View style={styles.dropdown}>
+          <View style={[styles.dropdown, { zIndex: 2000 }]}>
             <DropDownPicker
               open={unitOpen1}
               value={unitValue1}
               items={unitItems1}
+               listMode="SCROLLVIEW"
+              dropDownDirection="BOTTOM"
               setOpen={setUnitOpen1}
               setValue={setUnitValue1}
               setItems={setUnitItems1}
               placeholder="AM/PM"
               zIndex={500}
-              style={{ height: 40 }}
             />
           </View>
         </View>

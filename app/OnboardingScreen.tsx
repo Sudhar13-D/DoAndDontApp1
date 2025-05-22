@@ -1,52 +1,63 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { navigate } from 'expo-router/build/global-state/routing';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useState } from "react";
+import { useRouter } from "expo-router";
 
-export default function OnboardingScreen({ navigation }: any) {
-  const [name, setName] = useState('');
-  const [goal, setGoal] = useState('');
+export default function OnboardingScreen() {
+  const [name, setName] = useState("");
+  const router = useRouter();
 
-  const handleStart = async () => {
-    if (name && goal) {
-      await AsyncStorage.setItem('userName', name);
-      await AsyncStorage.setItem('biggestGoal', goal);
-      await AsyncStorage.setItem('firstLaunchDone', 'true');
-      navigation.navigate('HomeScreen');
-      navigation.replace('Goal'); // Replace with your goal screen
-    }
+  const handleContinue = async () => {
+    if (!name.trim()) return;
+
+    await AsyncStorage.setItem("userName", name);
+    await AsyncStorage.setItem("hasSeenWelcome", "true"); // So we don't show onboarding next time
+
+    router.replace("/"); // 👈 This takes user to the Home screen (index.tsx)
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Enter your name:</Text>
-      <TextInput style={styles.input} value={name} onChangeText={setName} />
-
-      <Text style={styles.label}>Enter your biggest goal:</Text>
-      <TextInput style={styles.input} value={goal} onChangeText={setGoal} />
-
-      <TouchableOpacity style={styles.button} onPress={handleStart}>
-        <Text style={styles.buttonText}>Start</Text>
+      <Text style={styles.title}>Welcome!</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter your name"
+        value={name}
+        onChangeText={setName}
+      />
+      <TouchableOpacity style={styles.button} onPress={handleContinue}>
+        <Text style={styles.buttonText}>Continue</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center' },
-  label: { fontSize: 18, marginVertical: 8 },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+    backgroundColor: "#F0F8FF",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: "#3399FF",
     borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
+    padding: 12,
+    marginBottom: 20,
   },
-  button: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 20,
-  },
-  buttonText: { color: '#fff', textAlign: 'center', fontWeight: 'bold' },
+  button: { backgroundColor: "#007AFF", padding: 15, borderRadius: 10 },
+  buttonText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
 });

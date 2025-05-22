@@ -6,11 +6,15 @@ import {RootStackParamList} from '@/app/type';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Dimensions } from 'react-native';
 
 
 
 
+const { width } = Dimensions.get('window');
 export default function Index() {
+  
+
   const navigation = useNavigation<NavigationProp>();
   const [quote,setQuote]=useState('')
   const handleQuote = () =>{
@@ -107,48 +111,49 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonGrid: {
-    paddingTop:100,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 10, // use margin if `gap` is not supported in your React Native version
-  },
-  button1: {
-    backgroundColor: 'green',
-    width: 175,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 8, // spacing between buttons
-    borderRadius: 20,
-  },
-  button2: {
-    backgroundColor: 'red',
-    width: 175,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 8, // spacing between buttons
-    borderRadius: 20,
-  },
-  button3: {
-    backgroundColor: 'skyblue',
-    width: 175,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 8, // spacing between buttons
-    borderRadius: 20,
-  },
-  button4: {
-    backgroundColor: 'orange',
-    width: 175,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 8, // spacing between buttons
-    borderRadius: 20,
-  },
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'space-between',
+  paddingHorizontal: 20,
+  marginTop: 100,
+},
+button1: {
+  backgroundColor: 'green',
+  width: width * 0.42,
+  height: 100,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginVertical: 10,
+  borderRadius: 20,
+},
+button2: {
+  backgroundColor: 'red',
+  width: width * 0.42,
+  height: 100,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginVertical: 10,
+  borderRadius: 20,
+},
+button3: {
+  backgroundColor: 'skyblue',
+  width: width * 0.42,
+  height: 100,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginVertical: 10,
+  borderRadius: 20,
+},
+button4: {
+  backgroundColor: 'orange',
+  width: width * 0.42,
+  height: 100,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginVertical: 10,
+  borderRadius: 20,
+},
+
   
   buttonText: {
     color: 'white',
