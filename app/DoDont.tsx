@@ -1,4 +1,17 @@
-import { Image, StyleSheet, Platform, Button, Alert, TextInput, View, TouchableOpacity, Text } from 'react-native';
+import {
+  Image,
+  StyleSheet,
+  Platform,
+  Button,
+  Alert,
+  TextInput,
+  View,
+  TouchableOpacity,
+  Text,
+  Dimensions,
+  ScrollView,
+  KeyboardAvoidingView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '@/app/type';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,6 +20,7 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+const { width, height } = Dimensions.get('window');
 
 export default function DoDont() {
   const navigation = useNavigation<NavigationProp>();
@@ -21,108 +35,121 @@ export default function DoDont() {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'white' }}>
-      <Text style={{ textAlign: 'center', marginTop: 50 }}>
-        Hi {userName || 'there'}!!
-      </Text>
-      <Text style={{ textAlign: 'center', marginTop: 8 }}>
-        Welcome to Do's & Don'ts
-      </Text>
+    <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.greeting}>Hi {userName || 'there'}!!</Text>
+        <Text style={styles.subGreeting}>Welcome to Do's & Don'ts</Text>
 
-      <TextInput
-        style={styles.motivQouteContainer}
-        placeholder="Today's Motivational Quotes!!"
-      />
+        <TextInput
+          style={styles.motivQouteContainer}
+          placeholder="Today's Motivational Quotes!!"
+          multiline
+        />
 
-      <View style={styles.doButton}>
-        <Link href="../DoDont/DoList" asChild>
-          <TouchableOpacity style={styles.containerButton}>
-            <Text style={{ textAlign: 'center' }}>Do</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
+        <View style={styles.doButton}>
+          <Link href="../DoDont/DoList" asChild>
+            <TouchableOpacity style={styles.containerButton}>
+              <Text style={styles.buttonText}>Do</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
 
-      <View style={styles.dontButton}>
-        <Link href="../DoDont/DontList" asChild>
-          <TouchableOpacity style={styles.containerButton2}>
-            <Text style={{ textAlign: 'center' }}>Don't</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
+        <View style={styles.dontButton}>
+          <Link href="../DoDont/DontList" asChild>
+            <TouchableOpacity style={styles.containerButton2}>
+              <Text style={styles.buttonText}>Don't</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
 
-      <View style={styles.Nooftaskcompleted}>
-        <Text>No of task completed</Text>
-      </View>
-    </View>
+        <View style={styles.Nooftaskcompleted}>
+          <Text style={styles.completedText}>No of task completed</Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  motivQouteContainer: {
-    margin: 16,
-    padding: 80,
-    borderRadius: 20,
+  container: {
+    flexGrow: 1,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  greeting: {
+    textAlign: 'center',
+    fontSize: 20,
+    marginTop: 10,
+    fontWeight: '600',
+  },
+  subGreeting: {
     textAlign: 'center',
     fontSize: 16,
+    marginTop: 8,
+    color: '#555',
+  },
+  motivQouteContainer: {
+    width: width * 0.9,
+    height: height * 0.2,
+    borderRadius: 20,
+    padding: 20,
+    textAlignVertical: 'top',
+    fontSize: 16,
     backgroundColor: 'orange',
+    marginTop: 20,
   },
   containerButton: {
-    width: 200,
+    width: width * 0.6,
     height: 60,
     borderRadius: 999,
     backgroundColor: 'skyblue',
     justifyContent: 'center',
     alignItems: 'center',
-    fontSize: 50,
-    fontWeight: 'bold',
   },
   containerButton2: {
-    width: 200,
+    width: width * 0.6,
     height: 60,
     borderRadius: 999,
     backgroundColor: 'red',
     justifyContent: 'center',
     alignItems: 'center',
-    fontSize: 50,
+  },
+  buttonText: {
+    fontSize: 20,
+    color: 'white',
     fontWeight: 'bold',
   },
-  containerButton3: {
-    width: 50,
-    height: 50,
-    borderRadius: 999,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontSize: 25,
-    fontWeight: '300',
-  },
   doButton: {
+    marginTop: 40,
+    alignItems: 'center',
+    elevation: 10,
     shadowColor: 'white',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.9,
     shadowRadius: 20,
-    elevation: 15,
-    alignItems: 'center',
-    marginTop: 40,
   },
   dontButton: {
+    marginTop: 40,
+    alignItems: 'center',
+    elevation: 10,
     shadowColor: '#FF0000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.9,
     shadowRadius: 20,
-    elevation: 15,
-    alignItems: 'center',
-    marginTop: 40,
   },
   Nooftaskcompleted: {
     marginTop: 50,
-    margin: 17.5,
-    width: 400,
-    height: 200,
+    width: width * 0.9,
+    height: height * 0.2,
     borderRadius: 20,
     backgroundColor: 'grey',
-    textAlign: 'center',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  completedText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

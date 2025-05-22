@@ -1,149 +1,166 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, Text, View, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
+import * as Progress from 'react-native-progress';
 
-interface Habit {
+type Habit = {
   id: string;
   title: string;
-  history: { [date: string]: boolean };
-}
+  isDone: boolean;
+  history: Record<string, boolean>;
+};
 
-const LogScreen = () => {
+export default function LogScreen() {
   const [habits, setHabits] = useState<Habit[]>([]);
-  const [dates, setDates] = useState<string[]>([]);
+  const [allDates, setAllDates] = useState<string[]>([]);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      const loadData = async () => {
-        const storedHabits = await AsyncStorage.getItem('habits');
-        if (storedHabits) {
-          const parsedHabits: Habit[] = JSON.parse(storedHabits);
-          setHabits(parsedHabits);
+  useEffect(() => {
+    const loadLog = async () => {
+      const stored = await AsyncStorage.getItem('habits');
+      if (!stored) return;
 
-          const allDates = new Set<string>();
-          parsedHabits.forEach(habit =>
-            Object.keys(habit.history).forEach(date => allDates.add(date))
-          );
-          setDates(Array.from(allDates).sort((a, b) => b.localeCompare(a)));
-        }
-      };
+      const parsed: Habit[] = JSON.parse(stored);
+      setHabits(parsed);
 
-      loadData();
-    }, [])
-  );
+      const dateSet = new Set<string>();
+      parsed.forEach(habit => {
+        Object.keys(habit.history).forEach(date => dateSet.add(date));
+      });
 
-  const renderStatusBadge = (status: boolean) => (
-    <View style={[styles.badge, { backgroundColor: status ? '#4CAF50' : '#F44336' }]}>
-      <Text style={styles.badgeText}>{status ? 'Completed' : 'Not Completed'}</Text>
-    </View>
-  );
+      const sortedDates = Array.from(dateSet).sort((a, b) => b.localeCompare(a));
+      setAllDates(sortedDates);
+    };
 
-  const renderCell = (
-    content: string | JSX.Element,
-    isHeader = false,
-    style: any = {},
-    key?: string
-  ) => (
-    <View
-      key={key}
-      style={[
-        {
-          padding: 10,
-          borderWidth: isHeader ? 0 : 1,
-          borderColor: '#ddd',
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        style,
-        isHeader && styles.headerCell,
-      ]}
-    >
-      {typeof content === 'string' ? (
-        <Text style={[styles.cellText, isHeader && styles.headerText]}>{content}</Text>
-      ) : (
-        content
-      )}
-    </View>
-  );
+    loadLog();
+  }, []);
+
+  const getOverallConsistency = () => {
+    const total = habits.length * allDates.length;
+    if (total === 0) return 0;
+
+    const completed = habits.reduce((sum, habit) => {
+      return sum + allDates.filter(date => habit.history[date]).length;
+    }, 0);
+
+    return completed / total;
+  };
+
+  const getDailyConsistency = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const completedToday = habits.filter(habit => habit.history[today]).length;
+    return habits.length === 0 ? 0 : completedToday / habits.length;
+  };
+
+  const getConsistency = (habit: Habit) => {
+    const total = allDates.length;
+    const completed = allDates.filter(date => habit.history[date]).length;
+    return total === 0 ? '0%' : `${Math.round((completed / total) * 100)}%`;
+  };
 
   return (
-    <ScrollView horizontal>
-      <ScrollView style={{ flex: 1 }}>
-        {/* Header Row */}
-        <View style={[styles.row, styles.shadow]}>
-          {renderCell('Date', true, { width: 100 }, 'header-date')}
-          {habits.map(habit =>
-            renderCell(habit.title, true, { width: 150 }, `header-habit-${habit.id}`)
-          )}
-          {renderCell('Daily %', true, { width: 90 }, 'header-percent')}
+    <ScrollView style={styles.container} horizontal={false}>
+      {/* Consistency Summary */}
+      <View style={styles.consistencyContainer}>
+        <View style={styles.progressSection}>
+          <Progress.Circle
+            size={100}
+            progress={getOverallConsistency()}
+            showsText
+            formatText={() => `${Math.round(getOverallConsistency() * 100)}%`}
+            color="#007AFF"
+          />
+          <Text style={styles.label}>Overall Consistency</Text>
         </View>
+        <View style={styles.progressSection}>
+          <Progress.Circle
+            size={100}
+            progress={getDailyConsistency()}
+            showsText
+            formatText={() => `${Math.round(getDailyConsistency() * 100)}%`}
+            color="#34C759"
+          />
+          <Text style={styles.label}>Today's Consistency</Text>
+        </View>
+      </View>
 
-        {/* Data Rows */}
-        {dates.map((date, index) => {
-          const total = habits.length;
-          const completed = habits.filter(h => h.history[date]).length;
-          const percent = total ? Math.round((completed / total) * 100) : 0;
+      {/* Log Table */}
+      <ScrollView horizontal>
+        <View>
+          <View style={styles.row}>
+            <Text style={[styles.cell, styles.headerCell]}>Date</Text>
+            {habits.map(habit => (
+              <Text key={habit.id} style={[styles.cell, styles.headerCell]}>
+                {habit.title}
+              </Text>
+            ))}
+          </View>
 
-          return (
-            <View
-              key={`row-${date}`}
-              style={[
-                styles.row,
-                { backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9' },
-              ]}
-            >
-              {renderCell(date, false, { width: 100 }, `date-${date}`)}
-              {habits.map(habit =>
-                renderCell(
-                  renderStatusBadge(habit.history[date] ?? false),
-                  false,
-                  { width: 150 },
-                  `cell-${habit.id}-${date}`
-                )
-              )}
-              {renderCell(`${percent}%`, false, { width: 90 }, `percent-${date}`)}
+          {allDates.map(date => (
+            <View key={date} style={styles.row}>
+              <Text style={styles.cell}>{date}</Text>
+              {habits.map(habit => {
+                const status = habit.history[date];
+                return (
+                  <Text
+                    key={habit.id + date}
+                    style={[
+                      styles.cell,
+                      { color: status ? 'green' : 'red' },
+                    ]}
+                  >
+                    {status ? 'Completed' : 'Not Completed'}
+                  </Text>
+                );
+              })}
             </View>
-          );
-        })}
+          ))}
+
+          <View style={[styles.row, { backgroundColor: '#f0f0f0' }]}>
+            <Text style={[styles.cell, styles.headerCell]}>Consistency</Text>
+            {habits.map(habit => (
+              <Text key={habit.id + '-consistency'} style={[styles.cell, styles.headerCell]}>
+                {getConsistency(habit)}
+              </Text>
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  container: {
+    padding: 16,
+    backgroundColor: '#fff',
+    flex: 1,
+  },
+  consistencyContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  progressSection: {
+    alignItems: 'center',
+  },
+  label: {
+    marginTop: 8,
+    fontSize: 16,
+    fontWeight: '600',
+  },
   row: {
     flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
+    paddingVertical: 6,
+  },
+  cell: {
+    width: 120,
+    textAlign: 'center',
+    fontSize: 14,
   },
   headerCell: {
-    backgroundColor: '#4A90E2',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-  },
-  headerText: {
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  cellText: {
-    textAlign: 'center',
-  },
-  badge: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 5,
-  },
-  badgeText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  shadow: {
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+    fontSize: 16,
   },
 });
-
-export default LogScreen;
