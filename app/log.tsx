@@ -85,9 +85,10 @@ export default function LogScreen() {
 
       {/* Log Table */}
       <ScrollView horizontal>
-        <View>
-          <View style={styles.row}>
-            <Text style={[styles.cell, styles.headerCell]}>Date</Text>
+        <View style={styles.tableContainer}>
+          {/* Header Row */}
+          <View style={[styles.row, styles.tableHeader]}>
+            <Text style={styles.fixedCell}>Date</Text>
             {habits.map(habit => (
               <Text key={habit.id} style={[styles.cell, styles.headerCell]}>
                 {habit.title}
@@ -95,9 +96,16 @@ export default function LogScreen() {
             ))}
           </View>
 
-          {allDates.map(date => (
-            <View key={date} style={styles.row}>
-              <Text style={styles.cell}>{date}</Text>
+          {/* Data Rows */}
+          {allDates.map((date, idx) => (
+            <View
+              key={date}
+              style={[
+                styles.row,
+                idx === allDates.length - 1 ? styles.lastRow : null,
+              ]}
+            >
+              <Text style={styles.fixedCell}>{date}</Text>
               {habits.map(habit => {
                 const status = habit.history[date];
                 return (
@@ -115,8 +123,9 @@ export default function LogScreen() {
             </View>
           ))}
 
-          <View style={[styles.row, { backgroundColor: '#f0f0f0' }]}>
-            <Text style={[styles.cell, styles.headerCell]}>Consistency</Text>
+          {/* Consistency Row */}
+          <View style={[styles.row, styles.consistencyRow, styles.lastRow]}>
+            <Text style={styles.fixedCell}>Consistency</Text>
             {habits.map(habit => (
               <Text key={habit.id + '-consistency'} style={[styles.cell, styles.headerCell]}>
                 {getConsistency(habit)}
@@ -148,19 +157,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  tableContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
   row: {
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderColor: '#ccc',
-    paddingVertical: 6,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+  },
+  lastRow: {
+    borderBottomWidth: 0,
+  },
+  consistencyRow: {
+    backgroundColor: '#e0f7e9', // subtle green for clarity
+  },
+  tableHeader: {
+    backgroundColor: '#f7f7f7',
+  },
+  fixedCell: {
+    width: 120,
+    textAlign: 'center',
+    fontWeight: '600',
+    paddingVertical: 10,
   },
   cell: {
     width: 120,
     textAlign: 'center',
     fontSize: 14,
+    paddingVertical: 10,
   },
   headerCell: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 16,
   },
 });
